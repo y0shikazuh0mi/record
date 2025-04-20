@@ -5,6 +5,7 @@ import streamlit as st
 from datetime import datetime
 import tempfile
 
+# 環境変数の読み込み
 load_dotenv()
 
 # 必要なライブラリのインポート
@@ -22,6 +23,7 @@ except ImportError:
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# StreamlitのUI設定
 st.title("音声・テキスト要約アプリ")
 st.write("音声ファイルまたは文字起こしテキストを使って要約します。")
 
@@ -42,6 +44,7 @@ else:
 whisper_model = st.selectbox("Whisperモデルを選択：", ["small", "medium", "large"], index=1)
 mode = st.selectbox("要約モードを選んでください：", ["原文の誤字脱字を直して会話ごとに改行表示", "全体の趣旨をまとめる"])
 
+# ffmpegの存在チェック
 st.subheader("🔍 ffmpeg の存在チェック")
 ffmpeg_check = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True)
 ffmpeg_path = ffmpeg_check.stdout.strip()
@@ -50,7 +53,7 @@ if ffmpeg_path:
 else:
     st.error("❌ ffmpeg が見つかりませんでした。この環境にはインストールされていない可能性があります。")
 
-
+# 実行ボタンが押されたら処理開始
 if st.button("実行"):
     st.divider()
 
@@ -59,6 +62,7 @@ if st.button("実行"):
             st.error("すべての音声情報を入力してください。")
             st.stop()
 
+        # 一時ファイルに音声データを保存
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.name)[1]) as tmp_input:
             tmp_input.write(audio_file.read())
             input_path = tmp_input.name
@@ -68,18 +72,18 @@ if st.button("実行"):
 
         st.write(f"出力ファイルのパス: {output_path}")  # 出力パスを表示して確認
 
+        # ffmpegコマンドの実行
         command = [
             "ffmpeg", "-loglevel", "debug", "-ss", start_time, "-to", end_time,
             "-i", input_path, "-filter:a", f"volume={volume}", output_path
         ]
 
-        # ここでコマンドを表示
         st.write("ffmpegコマンドを実行します:")
         st.code(" ".join(command))
 
         result = subprocess.run(command, capture_output=True, text=True, timeout=60)
 
-        # ここで標準出力と標準エラーを表示する
+        # ffmpegの標準出力とエラーを表示
         st.write("ffmpeg 標準出力:")
         st.text(result.stdout)
 
@@ -93,15 +97,7 @@ if st.button("実行"):
             st.success("✅ 音声トリミング成功！")
             st.write(f"出力ファイルのパス: {output_path}")
 
-
-
-
-        if result.returncode != 0:
-            st.error(f"ffmpegエラー: {result.stderr}")
-            st.stop()
-        else:
-            st.write("音声トリミング成功 ✅")
-
+        # Whisperで文字起こし
         st.write("文字起こし中...")
         model = whisper.load_model(whisper_model)
         whisper_result = model.transcribe(output_path, language="ja")
@@ -123,20 +119,19 @@ if st.button("実行"):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
             temperature=0.5
         )
         summary = response['choices'][0]['message']['content']
 
+        # 結果の表示
         st.subheader("🔍 文字起こし結果")
         st.text_area("文字起こし", transcription, height=200)
 
         st.subheader("✏️ 要約結果")
         st.text_area("生成された要約", summary, height=300)
 
+        # 結果をファイルとして保存
         file_name = st.text_input("保存ファイル名（例：result.txt）", value="result.txt")
         if st.button("テキストとして保存"):
             combined_text = f"""【文字起こし結果】\n{transcription}\n\n【要約】\n{summary}\n"""
@@ -146,4 +141,5 @@ if st.button("実行"):
 
     except Exception as e:
         st.error(f"要約中にエラーが発生しました: {str(e)}")
+
 
