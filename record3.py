@@ -22,6 +22,13 @@ except ImportError:
     subprocess.run(["pip", "install", "openai==0.28"])
     import openai
 
+try:
+    import whisper
+except ImportError:
+    subprocess.run(["pip", "install", "git+https://github.com/openai/whisper.git"])
+    import importlib
+    whisper = importlib.import_module("whisper")
+
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # StreamlitのUI設定
