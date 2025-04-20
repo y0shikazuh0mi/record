@@ -77,7 +77,7 @@ if st.button("実行"):
         st.write("ffmpegコマンドを実行します:")
         st.code(" ".join(command))
 
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10)
 
         # ここで標準出力と標準エラーを表示する
         st.write("ffmpeg 標準出力:")
