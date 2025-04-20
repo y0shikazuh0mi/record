@@ -63,7 +63,31 @@ if st.button("実行"):
             "ffmpeg", "-ss", start_time, "-to", end_time, "-i", input_path,
             "-filter:a", f"volume={volume}", output_path
         ]
+
+        # ここでコマンドを表示
+        st.write("ffmpegコマンドを実行します:")
+        st.code(" ".join(command))
+
+
+
         result = subprocess.run(command, capture_output=True, text=True)
+
+        # 実行結果のログを表示
+        st.write("ffmpeg 実行結果（標準出力）:")
+        st.code(result.stdout)
+
+        st.write("ffmpeg 実行結果（エラー出力）:")
+        st.code(result.stderr)
+
+        # 結果のチェック
+        if result.returncode != 0:
+            st.error("ffmpegに失敗しました。詳細は上記のエラーログを確認してください。")
+            st.stop()
+        else:
+            st.write("音声トリミング成功 ✅")
+
+
+
 
         if result.returncode != 0:
             st.error(f"ffmpegエラー: {result.stderr}")
