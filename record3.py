@@ -77,23 +77,21 @@ if st.button("実行"):
         st.write("ffmpegコマンドを実行します:")
         st.code(" ".join(command))
 
-
-
         result = subprocess.run(command, capture_output=True, text=True)
 
-        # 実行結果のログを表示
-        st.write("ffmpeg 実行結果（標準出力）:")
-        st.code(result.stdout)
+        # ここで標準出力と標準エラーを表示する
+        st.write("ffmpeg 標準出力:")
+        st.text(result.stdout)
 
-        st.write("ffmpeg 実行結果（エラー出力）:")
-        st.code(result.stderr)
+        st.write("ffmpeg 標準エラー:")
+        st.text(result.stderr)
 
-        # 結果のチェック
         if result.returncode != 0:
-            st.error("ffmpegに失敗しました。詳細は上記のエラーログを確認してください。")
+            st.error("❌ ffmpeg 実行エラーが発生しました。")
             st.stop()
         else:
-            st.write("音声トリミング成功 ✅")
+            st.success("✅ 音声トリミング成功！")
+            st.write(f"出力ファイルのパス: {output_path}")
 
 
 
