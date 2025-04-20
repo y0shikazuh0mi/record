@@ -42,6 +42,15 @@ else:
 whisper_model = st.selectbox("Whisperモデルを選択：", ["small", "medium", "large"], index=1)
 mode = st.selectbox("要約モードを選んでください：", ["原文の誤字脱字を直して会話ごとに改行表示", "全体の趣旨をまとめる"])
 
+st.subheader("🔍 ffmpeg の存在チェック")
+ffmpeg_check = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True)
+ffmpeg_path = ffmpeg_check.stdout.strip()
+if ffmpeg_path:
+    st.success(f"✅ ffmpeg が見つかりました: {ffmpeg_path}")
+else:
+    st.error("❌ ffmpeg が見つかりませんでした。この環境にはインストールされていない可能性があります。")
+
+
 if st.button("実行"):
     st.divider()
 
