@@ -1,5 +1,6 @@
 import os
 import subprocess
+import pkg_resources
 from dotenv import load_dotenv
 import streamlit as st
 from datetime import datetime
@@ -9,16 +10,16 @@ import tempfile
 load_dotenv()
 
 # 必要なライブラリのインポート
-try:
-    import whisper
-except ImportError:
-    subprocess.run(["pip", "install", "git+https://github.com/openai/whisper.git"])
-    import whisper
-
+# openaiのバージョン確認と固定インストール
 try:
     import openai
+    version = pkg_resources.get_distribution("openai").version
+    if version != "0.28.0":
+        subprocess.run(["pip", "install", "--force-reinstall", "openai==0.28"])
+        import importlib
+        importlib.reload(openai)
 except ImportError:
-    subprocess.run(["pip", "install", "openai==0.28"])  # 古いAPI用に固定
+    subprocess.run(["pip", "install", "openai==0.28"])
     import openai
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
