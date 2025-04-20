@@ -84,17 +84,17 @@ if st.button("トリミング開始"):
 
     else:
 
-        # Whisperで文字起こし
-        st.write("文字起こし中...")
-        model = whisper.load_model(whisper_model)
-        whisper_result = model.transcribe(output_path, language="ja")
-        transcription = whisper_result["text"]
+        if input_mode == "音声ファイルを使用":
+            st.write("文字起こし中...")
+            model = whisper.load_model(whisper_model)
+            whisper_result = model.transcribe(output_path, language="ja")
+            transcription = whisper_result["text"]
 
-
-        transcription = text_input.strip()
-        if not transcription:
-            st.error("テキストを入力してください。")
-            st.stop()
+        else:
+            transcription = text_input.strip()
+            if not transcription:
+                st.error("テキストを入力してください。")
+                st.stop()
 
     # GPTによる要約
     system_prompt = "あなたは文書の校正者です。"
