@@ -80,13 +80,17 @@ if st.button("トリミング開始"):
     except subprocess.TimeoutExpired:
         st.error("⚠️ ffmpeg の実行がタイムアウトしました（60秒以上）")
 
+
+
+    else:
+
         # Whisperで文字起こし
         st.write("文字起こし中...")
         model = whisper.load_model(whisper_model)
         whisper_result = model.transcribe(output_path, language="ja")
         transcription = whisper_result["text"]
 
-    else:
+
         transcription = text_input.strip()
         if not transcription:
             st.error("テキストを入力してください。")
