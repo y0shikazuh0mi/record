@@ -126,13 +126,15 @@ if st.button("トリミング開始"):
         st.subheader("✏️ 要約結果")
         st.text_area("生成された要約", summary, height=300)
 
-        # 結果をファイルとして保存
         file_name = st.text_input("保存ファイル名（例：result.txt）", value="result.txt")
-        if st.button("テキストとして保存"):
-            combined_text = f"""【文字起こし結果】\n{transcription}\n\n【要約】\n{summary}\n"""
-            with open(file_name, "w", encoding="utf-8") as f:
-                f.write(combined_text)
-            st.success(f"{file_name} に保存しました！")
+        combined_text = f"""【文字起こし結果】\n{transcription}\n\n【要約】\n{summary}\n"""
+
+        st.download_button(
+            label="テキストをダウンロード",
+            data=combined_text,
+            file_name=file_name,
+            mime="text/plain"
+        )
 
     except Exception as e:
         st.error(f"要約中にエラーが発生しました: {str(e)}")
