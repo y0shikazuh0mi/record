@@ -36,66 +36,49 @@ summary = ""
 if input_mode == "文字起こし済テキストを使用":
     text_input = st.text_area("文字起こしされたテキストを入力してください：", height=200)
 else:
-    audio_file = st.file_uploader("音声ファイルをアップロードしてください（例: .mp3, .m4a, .wav）", type=["mp3", "m4a", "wav"])
-    start_time = st.text_input("開始時間（例: 00:00:00）", value="00:00:00")
-    end_time = st.text_input("終了時間（例: 00:01:00）", value="00:01:00")
+    audio_file = st.file_uploader("音声ファイルをアップロード", type=["mp3", "m4a", "wav"])
+    start_time = st.text_input("開始時間 (例: 00:00:00)")
+    end_time = st.text_input("終了時間 (例: 00:00:05)")
     volume = st.text_input("音声ボリューム倍率（例: 1.5）", value="1")
 
 whisper_model = st.selectbox("Whisperモデルを選択：", ["small", "medium", "large"], index=1)
 mode = st.selectbox("要約モードを選んでください：", ["原文の誤字脱字を直して会話ごとに改行表示", "全体の趣旨をまとめる"])
 
-# ffmpegの存在チェック
-st.subheader("🔍 ffmpeg の存在チェック")
-ffmpeg_check = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True)
-ffmpeg_path = ffmpeg_check.stdout.strip()
-if ffmpeg_path:
-    st.success(f"✅ ffmpeg が見つかりました: {ffmpeg_path}")
-else:
-    st.error("❌ ffmpeg が見つかりませんでした。この環境にはインストールされていない可能性があります。")
+if st.button("トリミング開始"):
 
-# 実行ボタンが押されたら処理開始
-if st.button("実行"):
-    st.divider()
+    if not all([audio_file, start_time, end_time]):
+        st.error("すべての情報を入力してください。")
+        st.stop()
 
-    if input_mode == "音声ファイルを使用":
-        if not all([audio_file, start_time, end_time, volume]):
-            st.error("すべての音声情報を入力してください。")
-            st.stop()
+    # 入力ファイルをテンポラリに保存
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.name)[1]) as tmp_input:
+        tmp_input.write(audio_file.read())
+        input_path = tmp_input.name
 
-        # 一時ファイルに音声データを保存
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.name)[1]) as tmp_input:
-            tmp_input.write(audio_file.read())
-            input_path = tmp_input.name
+    # 出力ファイルパスを作成
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_output:
+        output_path = tmp_output.name
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_output:
-            output_path = tmp_output.name
-
-        st.write(f"出力ファイルのパス: {output_path}")  # 出力パスを表示して確認
-
-        # ffmpegコマンドの実行
         command = [
-            "ffmpeg", "-loglevel", "debug", "-ss", start_time, "-to", end_time,
-            "-i", input_path, "-filter:a", f"volume={volume}", output_path
+            "ffmpeg", "-y", "-ss", start_time, "-to", end_time,
+            "-i", input_path, "-filter:a", "volume=1", output_path
         ]
-
-        st.write("ffmpegコマンドを実行します:")
-        st.code(" ".join(command))
 
         result = subprocess.run(command, capture_output=True, text=True, timeout=60)
 
-        # ffmpegの標準出力とエラーを表示
-        st.write("ffmpeg 標準出力:")
-        st.text(result.stdout)
-
-        st.write("ffmpeg 標準エラー:")
-        st.text(result.stderr)
+    try:
+        st.write("🔧 ffmpeg 実行中...")
+        result = subprocess.run(command, capture_output=True, text=True, timeout=60)
 
         if result.returncode != 0:
-            st.error("❌ ffmpeg 実行エラーが発生しました。")
-            st.stop()
+            st.error("❌ ffmpeg エラー発生")
+            st.text(result.stderr)
         else:
-            st.success("✅ 音声トリミング成功！")
-            st.write(f"出力ファイルのパス: {output_path}")
+            st.success("✅ トリミング成功！")
+            st.audio(output_path, format="audio/wav")
+
+    except subprocess.TimeoutExpired:
+        st.error("⚠️ ffmpeg の実行がタイムアウトしました（60秒以上）")
 
         # Whisperで文字起こし
         st.write("文字起こし中...")
