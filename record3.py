@@ -57,6 +57,8 @@ if st.button("実行"):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_output:
             output_path = tmp_output.name
 
+            st.write(f"出力ファイルのパス: {output_path}")  # 出力パスを表示して確認
+
         command = [
             "ffmpeg", "-ss", start_time, "-to", end_time, "-i", input_path,
             "-filter:a", f"volume={volume}", output_path
